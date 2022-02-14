@@ -1,84 +1,45 @@
 import express from "express";
+import { body } from "express-validator";
+import * as tweetsController from "../controller/tweets.js";
+import { validate } from "../middleware/validator.js";
 
-let tweets = [
-  {
-    id: "1",
-    text: "jiin fighting",
-    createdAt: Date.now().toString(),
-    name: "jk",
-    username: "jk",
-    url: "https://res.cloudinary.com/djzpo9g8p/image/upload/v1640918360/avatar2-2_enjahj.jpg",
-  },
-  {
-    id: "2",
-    text: "thank u",
-    createdAt: Date.now().toString(),
-    name: "jiin",
-    username: "jiin",
-    url: null,
-  },
-];
+/**
+ * MVC Pattern
+ * Model: data
+ * View:
+ * Controller: logic
+ */
+
+// validation
+// sanitization
+// Contract Testing: Client-Server
 
 const router = express.Router();
 
+const validateTweet = [
+  body("text")
+    .trim()
+    .isLength({ min: 3 })
+    .withMessage("Text should be at least 3 characters"),
+  validate,
+];
+
 // GET /tweets
 // GET /tweets?username=:username
-router.get("/", (req, res, next) => {
-  const { username } = req.query;
 
-  const data = username
-    ? tweets.filter((t) => t.username === username)
-    : tweets;
-
-  res.status(200).json(data);
-});
+// point: 함수를 호출하는 것이 아니라 함수를 연결시켜줘야 함
+router.get("/", tweetsController.getTweets);
 
 // GET /tweets/:id
-router.get("/:id", (req, res, next) => {
-  const { id } = req.params;
-  const tweet = tweets.find((t) => t.id === id);
-  if (tweet) {
-    res.status(200).json(tweet);
-  } else {
-    res.status(404).json({ message: `Tweet id(${id}) not found.` });
-  }
-});
+router.get("/:id", tweetsController.getTweet);
 
 // POST /tweets
-router.post("/", (req, res, next) => {
-  const { text, username, name } = req.body;
-  const tweet = {
-    id: Date.now().toString(),
-    text,
-    createdAt: Date.now().toString(),
-    name,
-    username,
-    url: null,
-  };
-
-  tweets = [tweet, ...tweets];
-  res.status(201).json(tweet);
-});
+router.post("/", validateTweet, tweetsController.createTweet);
 
 // PUT /tweets/:id
-router.put("/:id", (req, res, next) => {
-  const { id } = req.params;
-  const { text } = req.body;
-  const tweet = tweets.find((t) => t.id === id);
-
-  if (tweet) {
-    tweet.text = text;
-    res.status(200).json(tweet);
-  } else {
-    res.status(404).json({ message: `Tweet id(${id}) not found.` });
-  }
-});
+router.put("/:id", validateTweet, tweetsController.updateTweet);
 
 // DELETE /tweets/:id
-router.delete("/:id", (req, res, next) => {
-  const { id } = req.params;
-  tweets = tweets.filter((t) => t.id !== id);
-  res.sendStatus(204);
-});
+router.delete("/:id", tweetsController.deleteTweet);
 
 export default router;
